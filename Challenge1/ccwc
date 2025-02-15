@@ -1,0 +1,115 @@
+#!/Users/saither/miniforge3/envs/env2/bin/python
+"""
+ccwc: A custom implementation of the Unix wc tool.
+This script supports:
+  - -c: output the number of bytes in a file
+  - -l: output the number of lines in a file
+  - -w: output the number of words in a file
+  - -m: output the number of characters in a file
+If no options are provided, the tool defaults to -l, -w, and -c.
+If no filename is provided, the tool reads from standard input.
+"""
+
+import argparse
+import sys
+
+def count_data(text):
+    """
+    Count the lines, words, bytes, and characters of the input text.
+    """
+    # Count newlines for line count.
+    lines = text.count('\n')
+    # Splitting on whitespace gives the word count.
+    words = len(text.split())
+    # Count bytes by encoding text to UTF-8.
+    bytes_count = len(text.encode('utf-8'))
+    # Characters count; for multibyte locales this may differ from byte count.
+    chars = len(text)
+    return lines, words, bytes_count, chars
+
+def format_output(counts, filename=None):
+    """
+    Format the output similar to the standard wc tool.
+    Each count is right-justified. When a filename is provided,
+    it is appended at the end.
+    """
+    output_parts = []
+    # Using an 8-character width to align numbers.
+    if 'lines' in counts:
+        output_parts.append(f"{counts['lines']:>8}")
+    if 'words' in counts:
+        output_parts.append(f"{counts['words']:>8}")
+    if 'bytes' in counts:
+        output_parts.append(f"{counts['bytes']:>8}")
+    if 'chars' in counts:
+        output_parts.append(f"{counts['chars']:>8}")
+    if filename:
+        output_parts.append(f" {filename}")
+    return "".join(output_parts)
+
+def process_text(text, options, filename=None):
+    """
+    Process the text input to produce the required counts.
+    """
+    lines, words, bytes_count, chars = count_data(text)
+    
+    # Determine which counts to output based on flags.
+    # If no option flags are provided, default to lines, words, and bytes.
+    if not (options.bytes or options.lines or options.words or options.chars):
+        counts = {'lines': lines, 'words': words, 'bytes': bytes_count}
+    else:
+        counts = {}
+        if options.lines:
+            counts['lines'] = lines
+        if options.words:
+            counts['words'] = words
+        if options.bytes:
+            counts['bytes'] = bytes_count
+        if options.chars:
+            counts['chars'] = chars
+
+    # Print the formatted output.
+    print(format_output(counts, filename))
+
+def process_file(filename, options):
+    """
+    Open and process a file given by filename.
+    """
+    try:
+        # Open file in text mode with UTF-8 encoding.
+        with open(filename, 'r', encoding='utf-8', errors='replace') as f:
+            text = f.read()
+    except Exception as e:
+        sys.stderr.write(f"Error reading file '{filename}': {e}\n")
+        sys.exit(1)
+    
+    process_text(text, options, filename)
+
+def process_stdin(options):
+    """
+    Read from standard input and process the input text.
+    """
+    text = sys.stdin.read()
+    process_text(text, options)
+
+def main():
+    # Set up the command-line argument parser.
+    parser = argparse.ArgumentParser(
+        description="ccwc: A custom implementation of the Unix wc tool."
+    )
+    parser.add_argument("-c", "--bytes", action="store_true", help="print the byte counts")
+    parser.add_argument("-l", "--lines", action="store_true", help="print the newline counts")
+    parser.add_argument("-w", "--words", action="store_true", help="print the word counts")
+    parser.add_argument("-m", "--chars", action="store_true", help="print the character counts")
+    parser.add_argument("file", nargs="?", help="file to process (reads from stdin if not provided)")
+
+    options = parser.parse_args()
+
+    # If a filename is provided, process the file; otherwise, read from stdin.
+    if options.file:
+        process_file(options.file, options)
+    else:
+        process_stdin(options)
+
+if __name__ == "__main__":
+    main()

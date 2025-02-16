@@ -25,32 +25,92 @@ class Lexer:
             self.advance()
     
     def string(self):
-        """Parse a JSON string (assumes starting quote is consumed)."""
+        """Parse a JSON string (assumes the opening quote has been consumed)."""
         result = ""
         while True:
             if self.current_char is None:
                 self.error("Unterminated string")
             if self.current_char == '"':
-                self.advance()  # closing quote
+                self.advance()  # Consume the closing quote
                 break
-            if self.current_char == '\\':  # handle escape sequences
+            if self.current_char == '\\':  # Handle escape sequences
                 self.advance()
-                if self.current_char in ['"', '\\', '/', 'b', 'f', 'n', 'r', 't']:
-                    result += '\\' + self.current_char
+                if self.current_char == 'u':
+                    # Parse a Unicode escape sequence: \uXXXX
+                    unicode_value = ""
+                    for _ in range(4):
+                        self.advance()
+                        if self.current_char is None or self.current_char not in "0123456789abcdefABCDEF":
+                            self.error("Invalid unicode escape sequence")
+                        unicode_value += self.current_char
+                    try:
+                        result += chr(int(unicode_value, 16))
+                    except Exception:
+                        self.error("Invalid unicode escape sequence")
+                elif self.current_char in ['"', '\\', '/', 'b', 'f', 'n', 'r', 't']:
+                    escape_dict = {
+                        '"': '"',
+                        '\\': '\\',
+                        '/': '/',
+                        'b': '\b',
+                        'f': '\f',
+                        'n': '\n',
+                        'r': '\r',
+                        't': '\t'
+                    }
+                    result += escape_dict[self.current_char]
                 else:
                     self.error("Invalid escape sequence")
+                self.advance()
             else:
                 result += self.current_char
-            self.advance()
+                self.advance()
         return (TOKEN_STRING, result)
     
     def number(self):
-        """Parse a number."""
+        """Parse a number according to JSON rules."""
         result = ""
-        while self.current_char is not None and (self.current_char.isdigit() or self.current_char in '.-+eE'):
+        if self.current_char == '-':
+            result += '-'
+            self.advance()
+        if self.current_char == '0':
+            result += '0'
+            self.advance()
+            # If there are more digits after a 0, that's an error.
+            if self.current_char is not None and self.current_char.isdigit():
+                self.error("Leading zero in number")
+        else:
+            if not self.current_char.isdigit():
+                self.error("Expected digit")
+            while self.current_char is not None and self.current_char.isdigit():
+                result += self.current_char
+                self.advance()
+        
+        # Fractional part
+        if self.current_char == '.':
+            result += '.'
+            self.advance()
+            if self.current_char is None or not self.current_char.isdigit():
+                self.error("Expected digit after decimal point")
+            while self.current_char is not None and self.current_char.isdigit():
+                result += self.current_char
+                self.advance()
+        
+        # Exponent part
+        if self.current_char in ('e', 'E'):
             result += self.current_char
             self.advance()
+            if self.current_char in ('+', '-'):
+                result += self.current_char
+                self.advance()
+            if self.current_char is None or not self.current_char.isdigit():
+                self.error("Expected digit in exponent")
+            while self.current_char is not None and self.current_char.isdigit():
+                result += self.current_char
+                self.advance()
+    
         return (TOKEN_NUMBER, result)
+
     
     def next_token(self):
         while self.current_char is not None:

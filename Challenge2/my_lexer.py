@@ -33,10 +33,10 @@ class Lexer:
             if self.current_char == '"':
                 self.advance()  # Consume the closing quote
                 break
-            if self.current_char == '\\':  # Handle escape sequences
+            if self.current_char == '\\':
                 self.advance()
                 if self.current_char == 'u':
-                    # Parse a Unicode escape sequence: \uXXXX
+                    # Parse Unicode escape sequence: \uXXXX
                     unicode_value = ""
                     for _ in range(4):
                         self.advance()
@@ -63,9 +63,13 @@ class Lexer:
                     self.error("Invalid escape sequence")
                 self.advance()
             else:
+                # Check for unescaped control characters (code points < 0x20)
+                if ord(self.current_char) < 0x20:
+                    self.error("Unescaped control character in string")
                 result += self.current_char
                 self.advance()
         return (TOKEN_STRING, result)
+
     
     def number(self):
         """Parse a number according to JSON rules."""

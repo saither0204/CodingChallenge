@@ -1,4 +1,4 @@
-## Pseudo Code for the project
+## Pseudo Code for the project (Try to make it in C++)
 
 ```
 function countFrequencies(filename):

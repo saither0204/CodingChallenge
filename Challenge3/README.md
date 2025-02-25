@@ -1,8 +1,8 @@
-## Pseudo Codes for the project (Try to make it in C++)
+# Pseudo Codes for the project (Try to make it in C++)
 
+## Read File and Count Frequencies
 
-# Read File and Count Frequencies
-```
+```cpp
 function countFrequencies(filename):
     if file does not exist:
         return error
@@ -15,9 +15,9 @@ function countFrequencies(filename):
     return frequencyMap
 ```
 
-# Build the Huffman Tree
+## Build the Huffman Tree
 
-```
+```cpp
 function buildHuffmanTree(frequencyMap):
     priorityQueue = new PriorityQueue()
     for character, frequency in frequencyMap:
@@ -33,9 +33,9 @@ function buildHuffmanTree(frequencyMap):
     return priorityQueue.removeMin()  // This is the root of the Huffman tree.
 ```
 
-# Generate the Prefix-Code Table
+## Generate the Prefix-Code Table
 
-```
+```cpp
 function generateCodes(node, currentCode, codeTable):
     if node is a leaf:
         codeTable[node.character] = currentCode
@@ -51,11 +51,11 @@ function getPrefixCodes(root):
     return codeTable
 ```
 
-# Write the Header to the Output File
+## Write the Header to the Output File
 
-# Encode the Text
+## Encode the Text
 
-```
+```cpp
 function encodeText(text, codeTable):
     bitString = ""
     for character in text:
@@ -68,11 +68,11 @@ function packBits(bitString):
     return byteArray
 ```
 
-# Read the Header and Rebuild the Prefix Table
+## Read the Header and Rebuild the Prefix Table
 
-# Decode the Compressed Data
+## Decode the Compressed Data
 
-```
+```cpp
 function decodeBits(byteArray, root, totalBits):
     currentNode = root
     decodedText = ""
@@ -88,4 +88,3 @@ function decodeBits(byteArray, root, totalBits):
         bitCount += 1
     return decodedText
 ```
-

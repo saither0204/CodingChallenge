@@ -142,3 +142,4 @@ curl -v http://localhost:8080/random
 - Add **POST request support**.
 - Implement **multi-threading** for handling multiple clients.
 - Add **HTTPS (TLS/SSL) support**.
+- Implement **dynamic content generation**.
